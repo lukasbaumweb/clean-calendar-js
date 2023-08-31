@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <%= htmlWebpackPlugin.tags.headTags %>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0
+      }
+
+      .wrapper {
+        text-align: center;
+        min-height: 100vh;
+        overflow: hidden;
+      }
+    </style>
+
+</head>
+
+<body>
+  <main class="wrapper">
+    <div class="calendar" id="calendar"></div>
+  </main>
+  <%= htmlWebpackPlugin.tags.bodyTags %>
+
+    <script>
+      const currentMonth = new Date().getMonth();
+      const calendarElement = document.getElementById('calendar');
+
+      const events = [
+        {
+          title: 'Test 0',
+          start: new Date(2023, currentMonth, 16),
+        },
+        {
+          title: 'Test 1',
+          start: new Date(2023, currentMonth, 16),
+        },
+        {
+          title: 'Test 2',
+          description: 'Event 12-15',
+          start: new Date(2023, currentMonth, 12),
+          end: new Date(2023, currentMonth, 15),
+        },
+        {
+          title: 'Test 3',
+          description: 'Event 12-15',
+          start: new Date(2023, currentMonth, 12),
+          color: '#111111',
+        },
+        {
+          title: 'Test 4',
+          description: 'Event 12-15',
+          start: new Date(2023, currentMonth, 12),
+          end: new Date(2023, currentMonth, 20),
+          color: '#4444ff',
+        },
+        {
+          title: 'Test 5',
+          description: 'Event 12-15',
+          start: new Date(2023, currentMonth, 16),
+          end: new Date(2023, currentMonth, 18),
+          color: '#92140C',
+        },
+        {
+          title: 'Test 6',
+          description: 'Event 12-15',
+          start: new Date(2023, currentMonth - 1, 30),
+          end: new Date(2023, currentMonth, 6),
+          color: '#81E979',
+        },
+        {
+          title: 'Test 7',
+          description: 'Event 12-15',
+          start: new Date(2023, currentMonth - 1, 25),
+          end: new Date(2023, currentMonth, 5),
+          color: '#5BC0BE',
+        },
+        {
+          title: 'Test 8',
+          description: 'Event 12-15',
+          start: new Date(2023, currentMonth - 1, 28),
+          end: new Date(2023, currentMonth - 1, 31),
+          color: '#3F334D',
+        },
+      ]
+
+      const options = {
+        locale: 'DE',
+        readonly: false,
+        showDebugLogs: true,
+        events,
+      };
+
+      const cal = new CleanCalendarJS(calendarElement, options);
+      cal.init();
+
+    </script>
+</body>
+
+</html>
