@@ -3,7 +3,7 @@ export type CalendarEvent = {
   title?: string;
   description?: string;
   start: Date;
-  end: Date;
+  end?: Date;
   isAllDay?: boolean;
   color?: string;
 };

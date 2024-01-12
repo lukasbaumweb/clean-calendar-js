@@ -1,3 +1,4 @@
+import { Close } from '../icons/';
 import { CalendarEvent } from '../types/calendarEvent';
 import { Localization } from './Localization.class';
 import { Logger } from './Logger.class';
@@ -20,12 +21,14 @@ export class Modal {
     const end = event.end ? `<span class="end">${format(event.end, 'dd.MM.yyyy hh:mm:ss')}</span>` : '';
 
     if (event.isAllDay) {
-      return `<p>
-      <span class="title">${event.title}${Localization.localize('allDay')}</span>
+      return `
+      <p>
+        <span class="title">${event.title}${Localization.localize('allDay')}</span>
       </p>`;
     }
 
-    return `<p>
+    return `
+    <p>
       <span class="title">${event.title}</span>
       <span class="start">${format(event.start, 'dd.MM.yyyy hh:mm:ss')}</span>
       ${end}
@@ -42,14 +45,7 @@ export class Modal {
 
     const closeBtn = document.createElement('button');
     closeBtn.classList.add('closeBtn');
-    closeBtn.innerHTML = `
-    <?xml version="1.0" encoding="utf-8"?>
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-        <g id="close">
-            <path id="x" d="M18.717 6.697l-1.414-1.414-5.303 5.303-5.303-5.303-1.414 1.414 5.303 5.303-5.303 5.303 1.414 1.414 5.303-5.303 5.303 5.303 1.414-1.414-5.303-5.303z"/>
-        </g>
-    </svg>
-    `;
+    closeBtn.innerHTML = Close;
     closeBtn.onclick = () => this.hide();
 
     this.header.append(closeBtn);

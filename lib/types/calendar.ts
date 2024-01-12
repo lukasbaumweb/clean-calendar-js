@@ -2,16 +2,27 @@ import { CalendarEvent } from './calendarEvent';
 import { Day } from './day';
 import { Locale } from './locales';
 
-export interface CalendarOptions {
+export type PlainOptions = {
   locale?: Locale;
   editable?: boolean;
   clickable?: boolean;
   readonly?: boolean;
+  disableTooltip?: boolean;
+  hideCopyright?: boolean;
+  showDebugLogs?: boolean;
+  maxEventsPerDay?: number;
+};
+
+export type EventOptions = {
   onClick?: (target: { date: Day }) => void;
   onEventClick?: (event: CalendarEvent, mouseEvent: MouseEvent) => unknown | null;
-  events?: CalendarEvent[];
-  disableTooltip?: boolean;
-}
+};
+
+export type DataOptions = {
+  events: CalendarEvent[];
+};
+
+export type CalendarOptions = PlainOptions & EventOptions & DataOptions;
 
 export type Elements = {
   root: HTMLElement | null;
@@ -20,7 +31,7 @@ export type Elements = {
   body: HTMLElement | null;
   innerBody: HTMLElement | null;
   toolbar: ToolbarElements;
-  footer: HTMLElement;
+  footer: HTMLElement | null;
 };
 
 export type ToolbarElements = {
@@ -32,3 +43,15 @@ export type ToolbarElements = {
   current: HTMLElement | null;
   viewChangerContainer: HTMLElement | null;
 };
+
+export type HTMLElementProps = {
+  type: keyof HTMLElementTagNameMap;
+  content?: string;
+  classes?: string | string[];
+  id?: string;
+  href?: string;
+  rel?: 'stylesheet';
+  onclick?: (this: GlobalEventHandlers, ev: MouseEvent) => void;
+};
+
+export type OpenPluginCalendar = DataOptions;

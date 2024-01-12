@@ -1,7 +1,4 @@
-export enum Locale {
-  DE = 'DE',
-  EN = 'EN',
-}
+export type Locale = "de_DE" | "en_US";
 
 export type LocalizationKeys = keyof Localization;
 

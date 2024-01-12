@@ -1,53 +1,30 @@
 import { CalendarEvent } from '../types/calendarEvent';
-import { CalendarOptions, Elements } from '../types/calendar';
+import { CalendarOptions, Elements, HTMLElementProps } from '../types/calendar';
 import { Day } from '../types/day';
 import { Helper } from './Helper.class';
-import { Locale } from '../types/locales';
 import { Localization } from './Localization.class';
 import { Modal } from './Modal.class';
 import { TileOptions } from '../types/tileOptions';
 import { Logger } from './Logger.class';
 import { getWeek } from 'date-fns';
+import { CalendarToday, ChevronLeft, ChevronRight } from '../icons';
 
-type ElementProps = {
-  type: keyof HTMLElementTagNameMap;
-  content?: string;
-  classes?: string[];
-  id?: string;
-  href?: string;
-  rel?: 'stylesheet';
-  onclick?: (this: GlobalEventHandlers, ev: MouseEvent) => void;
-};
+const MAX_DISPLAY_EVENTS_PER_DAY = 3;
 
-const DEFAULTS = {
-  locale: Locale.EN,
-  events: [] as CalendarEvent[],
-  disableTooltip: true,
-  readonly: false,
-  onClick: ({ date }: { date: Day }) => {
-    Logger.log(`Calendar: onClick event triggered:${JSON.stringify(date)}`);
-  },
-  onEventClick: (calendarEvent: CalendarEvent, mouseEvent: MouseEvent) => {
-    Logger.log(
-      `Calendar: onEventClick event triggered. Target: ${calendarEvent.title} MouseEvent: ${JSON.stringify(mouseEvent)}`
-    );
-  },
-  showDebugLogs: false,
-  hideFooter: false,
-};
-
-const MAX_EVENTS_PER_DAY = 3;
-
-const createElement = (props: ElementProps) => {
+const createElement = (props: HTMLElementProps) => {
   const element = document.createElement(props.type);
 
   element.innerHTML = props.content || '';
 
   element.onclick = props.onclick || null;
 
-  props.classes?.forEach((cls) => {
-    element.classList.add(cls);
-  });
+  if (Array.isArray(props.classes)) {
+    props.classes?.forEach((cls) => {
+      element.classList.add(cls);
+    });
+  } else if (props.classes) {
+    element.classList.add(props.classes);
+  }
 
   if (props.id) element.id = props.id;
 
@@ -56,15 +33,6 @@ const createElement = (props: ElementProps) => {
 
 export class Calendar {
   initDate = new Date();
-  icons = ['gg-calendar-prev', 'gg-calendar-today', 'gg-calendar-next'];
-  resources = [
-    {
-      href: `https://css.gg/css`,
-      rel: 'stylesheet',
-      type: 'text/css',
-      media: 'all',
-    },
-  ];
   elements = {
     root: null,
     header: null,
@@ -87,20 +55,34 @@ export class Calendar {
   currentDate = new Date();
 
   modal: Modal | null = null;
-  options = {
-    ...DEFAULTS,
+
+  // Default options
+  options: CalendarOptions = {
+    locale: 'en_US',
+    events: [] as CalendarEvent[],
+    disableTooltip: true,
+    readonly: false,
+    onClick: ({ date }: { date: Day }) => {
+      Logger.log(`Calendar: onClick event triggered:${JSON.stringify(date)}`);
+    },
+    onEventClick: (calendarEvent: CalendarEvent) => {
+      Logger.log(`Calendar: onEventClick event triggered. Target: ${calendarEvent.title}`);
+    },
+    maxEventsPerDay: MAX_DISPLAY_EVENTS_PER_DAY,
+    showDebugLogs: false,
+    hideCopyright: false,
   };
 
-  constructor(element: HTMLElement | null, options: CalendarOptions) {
-    this.elements.root = element;
+  constructor(element: HTMLElement | string, options?: CalendarOptions) {
+    this.elements.root = element instanceof HTMLElement ? element : document.querySelector(element);
     this.options = Object.assign(this.options, options);
 
     if (this.options.showDebugLogs) Logger.showDebugLog = true;
-    if (this.options.locale) Localization.locale = Locale[this.options.locale];
+    if (this.options.locale) Localization.locale = this.options.locale;
+    if (!this.options.maxEventsPerDay) this.options.maxEventsPerDay = MAX_DISPLAY_EVENTS_PER_DAY;
 
     if (this.options.events) this.options.events = Helper.parseCalendarEvents(this.options.events);
 
-    this.loadResources();
     this.initModal();
   }
 
@@ -109,64 +91,47 @@ export class Calendar {
     this.modal.init();
   };
 
-  loadResources() {
-    const head = document.getElementsByTagName('head')[0];
-
-    this.resources.forEach((resource) => {
-      const link = createElement({
-        type: 'link',
-      }) as HTMLLinkElement;
-
-      link.href = resource.href;
-      link.rel = resource.rel;
-      link.type = resource.type;
-      link.media = resource.media;
-
-      head.appendChild(link);
-    });
-  }
-
   createToolbar() {
     this.elements.toolbar.root = createElement({
       type: 'div',
-      classes: ['toolbar'],
+      classes: 'toolbar',
     });
 
     this.elements.toolbar.btnGroundContainer = createElement({
       type: 'div',
-      classes: ['btnGroupContainer'],
+      classes: 'btnGroupContainer',
     });
 
     this.elements.toolbar.prevBtn = createElement({
       type: 'button',
       classes: ['btn', 'prev'],
-      content: `<i class="gg-chevron-left"></i>`,
+      content: ChevronLeft,
       onclick: this.previous(),
     }) as HTMLButtonElement;
 
     this.elements.toolbar.todayBtn = createElement({
       type: 'button',
       classes: ['btn', 'today'],
-      content: `<i class="gg-calendar-today"></i>`,
+      content: CalendarToday,
       onclick: this.today(),
     }) as HTMLButtonElement;
 
     this.elements.toolbar.nextBtn = createElement({
       type: 'button',
       classes: ['btn', 'next'],
-      content: `<i class="gg-chevron-right"></i>`,
+      content: ChevronRight,
       onclick: this.next(),
     }) as HTMLButtonElement;
 
     this.elements.toolbar.current = createElement({
       type: 'h3',
-      classes: ['current'],
+      classes: 'current',
       content: `${Localization.localize('loading')}...`,
     });
 
     this.elements.toolbar.viewChangerContainer = createElement({
       type: 'div',
-      classes: ['viewChangerContainer'],
+      classes: 'viewChangerContainer',
     });
 
     this.elements.toolbar.btnGroundContainer.appendChild(this.elements.toolbar.prevBtn);
@@ -180,14 +145,14 @@ export class Calendar {
   }
 
   createFooter() {
-    if (!this.options.hideFooter) {
+    if (!this.options.hideCopyright) {
       this.elements.footer = createElement({
         type: 'div',
-        classes: ['footer'],
-        content: `<h6> &copy; Copyright ${new Date().getFullYear()} <a href="https://clean-calendar.baum-lukas.de" target="_blank">Clean Calendar</a></h6>`,
+        classes: 'footer',
+        content: `<h6>&copy; ${new Date().getFullYear()} <a href="https://clean-calendar.baum-lukas.de" target="_blank">Clean Calendar</a></h6>`,
       });
 
-      this.elements.body.appendChild(this.elements.footer);
+      this.elements.body?.appendChild(this.elements.footer);
     }
   }
 
@@ -200,12 +165,10 @@ export class Calendar {
 
   today() {
     return () => {
-      if (
-        !(
-          this.currentDate.getMonth() == this.initDate.getMonth() &&
-          this.currentDate.getFullYear() == this.initDate.getFullYear()
-        )
-      ) {
+      const sameMonth =
+        this.currentDate.getMonth() === this.initDate.getMonth() &&
+        this.currentDate.getFullYear() === this.initDate.getFullYear();
+      if (!sameMonth) {
         this.currentDate = this.initDate;
         this.update();
       }
@@ -226,7 +189,7 @@ export class Calendar {
 
     this.elements.innerBody = createElement({
       type: 'div',
-      classes: ['innerBody'],
+      classes: 'innerBody',
     });
 
     this.elements.body = createElement({ type: 'div', classes: ['body'] });
@@ -258,9 +221,10 @@ export class Calendar {
     });
 
     el.onclick = () => {
-      this.options.onClick({
-        date: day,
-      });
+      this.options.onClick &&
+        this.options.onClick({
+          date: day,
+        });
 
       this.currentDate = day.date;
     };
@@ -315,8 +279,13 @@ export class Calendar {
     }
 
     for (let i = 1; i < 7 - lastDayOfMonth.getDay(); i++) {
-      const date = new Date(this.currentDate.getFullYear(), (this.currentDate.getMonth() + 1) % 11, i);
-      this.days.push({ date, isNextMonth: true, children: [], events: [] } as Day);
+      const date = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, i);
+      this.days.push({
+        date,
+        isNextMonth: true,
+        children: [],
+        events: [],
+      } as Day);
     }
   };
 
@@ -324,7 +293,10 @@ export class Calendar {
     if (this.elements.innerBody === null || this.days == undefined) return;
     this.elements.innerBody.innerHTML = '';
     for (let i = 0; i < this.days.length; i++) {
-      const dayHTML = this.createDay(this.days[i], { addWeekNumber: true, index: i });
+      const dayHTML = this.createDay(this.days[i], {
+        addWeekNumber: true,
+        index: i,
+      });
       this.days[i].events?.forEach((event: HTMLElement) => {
         dayHTML.appendChild(event);
       });
@@ -333,9 +305,9 @@ export class Calendar {
   }
 
   displayDayNames = () => {
-    for (let i = 0; i < Localization.days.length; i++) {
-      const day = document.createElement('th');
-      day.classList.add('dayName');
+    for (let i = 0; i < Object.values(Localization.days).length; i++) {
+      const day = document.createElement('span');
+      day.classList.add('weekday');
       day.innerText = Localization.localizeDay(i);
       this.elements.header?.appendChild(day);
     }
@@ -344,7 +316,7 @@ export class Calendar {
   displayToolbar = () => {
     if (this.elements.toolbar.current) {
       this.elements.toolbar.current.innerText = `${
-        Localization.months[this.currentDate.getMonth()]
+        Object.values(Localization.months)[this.currentDate.getMonth()]
       } ${this.currentDate.getFullYear()}`;
     }
   };
@@ -371,7 +343,7 @@ export class Calendar {
 
     calEventHTML.onclick = (e) => {
       e.stopPropagation();
-      this.options.onEventClick(calendarEvent, e);
+      this.options.onEventClick && this.options.onEventClick(calendarEvent, e);
     };
 
     if (!this.options.disableTooltip && calendarEvent.description && calendarEvent.description?.length > 0)
@@ -389,11 +361,14 @@ export class Calendar {
   };
 
   getEvents = (date: Date) => {
-    return this.options.events.filter(
-      (event) =>
-        Helper.isToday(event.start, date) ||
-        Helper.isToday(event.start, date) ||
-        (event.end && event.start.getTime() < date.getTime() && date.getTime() < event.end.getTime())
+    return (
+      this.options.events &&
+      this.options.events.filter(
+        (event) =>
+          Helper.isToday(event.start, date) ||
+          Helper.isToday(event.start, date) ||
+          (event.end && event.start.getTime() < date.getTime() && date.getTime() < event.end.getTime())
+      )
     );
   };
 
@@ -411,60 +386,65 @@ export class Calendar {
     return btnHTML;
   };
 
+  // TODO: Refactor this method. fcking mess from gpt
   attachCalendarEvents = () => {
-    const sortByIsAllDay = (a: CalendarEvent, b: CalendarEvent) =>
-      (b.end !== undefined ? 1 : 0) - (a.end != undefined ? 1 : 0);
-
-    const sortByStart = (a: CalendarEvent, b: CalendarEvent) => {
-      const first = a.start.getDate() - b.start.getDate();
-      return first;
+    const sortByIsAllDay = (a: CalendarEvent, b: CalendarEvent) => {
+      return (b.end !== undefined ? 1 : 0) - (a.end != undefined ? 1 : 0);
     };
 
-    const filterByDate = (event: CalendarEvent) =>
+    const sortByStart = (a: CalendarEvent, b: CalendarEvent) => a.start.getDate() - b.start.getDate();
+
+    const isCurrentMonth = (event: CalendarEvent) =>
       event.start.getMonth() === this.currentDate.getMonth() || event.end?.getMonth() === this.currentDate.getMonth();
 
-    const filtered = this.options.events.sort(sortByIsAllDay).sort(sortByStart).filter(filterByDate);
+    const filtered = this.options.events.sort(sortByIsAllDay).sort(sortByStart).filter(isCurrentMonth);
+
+    console.log(filtered);
 
     filtered.forEach((event: CalendarEvent) => {
       const start = this.days.find((day) => Helper.isToday(event.start, day.date));
       if (start == undefined || start.events == undefined) return;
       const starterPosition = start.events.length + 1;
 
-      event.end
-        ? (() => {
-            const end = this.days.find((day) => Helper.isToday(event.end, day.date)) || this.days[this.days.length - 1];
-            const diff = this.days.filter((day) => Helper.isInBetween(day.date, event.start, event.end));
+      if (event.end) {
+        const end = this.days.find((day) => Helper.isToday(event.end!, day.date)) || this.days[this.days.length - 1];
+        const diff = this.days.filter((day) => Helper.isInBetween(day.date, event.start, event.end!));
 
-            start.events.push(this.createCalendarEvent(event, { isStart: true }));
-            diff.forEach((e) => {
-              if (Helper.isToday(e.date, end.date) || Helper.isToday(e.date, start.date) || e.events == undefined)
-                return;
-              const lengthDiff = starterPosition - e.events.length - 1;
-              for (let i = 0; i < lengthDiff; i++) {
-                e.events.push(this.createSpacer());
-              }
-              e.events.push(this.createCalendarEvent(event, { isCenter: true }));
-            });
+        start.events.push(this.createCalendarEvent(event, { isStart: true }));
+        diff.forEach((e) => {
+          if (Helper.isToday(e.date, end.date) || Helper.isToday(e.date, start.date) || e.events == undefined) return;
+          const lengthDiff = starterPosition - e.events.length - 1;
+          for (let i = 0; i < lengthDiff; i++) {
+            e.events.push(this.createSpacer());
+          }
+          e.events.push(this.createCalendarEvent(event, { isCenter: true }));
+        });
 
-            if (end.events != undefined) {
-              const lengthDiff = starterPosition - end.events.length - 1;
-              for (let i = 0; i < lengthDiff; i++) {
-                end.events.push(this.createSpacer());
-              }
-              end.events.push(this.createCalendarEvent(event, { isEnd: true }));
-            }
-          })()
-        : start.events.push(this.createCalendarEvent(event, { showTitle: true }));
+        if (end.events != undefined) {
+          const lengthDiff = starterPosition - end.events.length - 1;
+          for (let i = 0; i < lengthDiff; i++) {
+            end.events.push(this.createSpacer());
+          }
+          end.events.push(this.createCalendarEvent(event, { isEnd: true }));
+        }
+      } else {
+        start.events.push(this.createCalendarEvent(event, { showTitle: true }));
+      }
     });
+
+    console.log(this.days);
 
     this.days.forEach((day) => {
       const sumEvents = day.events.length;
-      if (sumEvents > MAX_EVENTS_PER_DAY) {
-        day.events.length = MAX_EVENTS_PER_DAY;
-        day.events.push(this.createShowMoreBtn(day, sumEvents - MAX_EVENTS_PER_DAY));
+
+      if (sumEvents > this.options.maxEventsPerDay!) {
+        //FIXME: If event starts and end on the same day, the show more button display wrong number of events
+        day.events.length = this.options.maxEventsPerDay!;
+        day.events.push(this.createShowMoreBtn(day, sumEvents - this.options.maxEventsPerDay!));
       }
     });
   };
+
   update = () => {
     this.displayToolbar();
     this.calculateDays();
