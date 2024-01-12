@@ -1,5 +1,5 @@
-import CleanCalendarJS from '../lib/index';
-import { CalendarEvent } from '../lib/types/calendarEvent';
+import { CleanCalendarJS } from '../lib/index';
+import type { CalendarEvent } from '../lib/index';
 
 const currentYear = new Date().getFullYear();
 const currentMonth = new Date().getMonth();

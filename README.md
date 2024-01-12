@@ -1,6 +1,6 @@
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 
-# Clean Calendar JS
+# Clean Calendar JS (WORK IN PROGRESS)
 
 A simple and clean library for display events in a responsive and minimalistic calendar.
 
@@ -19,8 +19,16 @@ Install clean-calendar-js with npm
     
 ## Usage/Examples
 
+
 ```javascript
 import { CleanCalendarJS } from 'clean-calendar-js';
+
+const calendar = new CleanCalendarJS('#calendar');
+calendar.init()
+```
+
+### Browser
+```javascript
 
 const calendar = new CleanCalendarJS('#calendar');
 calendar.init()

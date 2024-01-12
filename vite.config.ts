@@ -4,7 +4,7 @@ export default defineConfig({
   build: {
     lib: {
       entry: 'lib/index.ts',
-      name: 'clean-calendar-js',
+      name: 'CleanCalendarJS',
       fileName: (format) => `clean-calendar-js.${format}.js`,
     },
   },

@@ -1,3 +1,6 @@
 import { CleanCalendarJS } from './classes/Calendar.class';
 
-export default CleanCalendarJS;
+import './../scss/Calendar.scss';
+
+export { CleanCalendarJS };
+export type { CalendarEvent } from './types/calendarEvent';
