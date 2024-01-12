@@ -10,5 +10,6 @@ export default defineConfig({
   },
   server: {
     port: 4202,
+    open: '/client/index.html',
   },
 });

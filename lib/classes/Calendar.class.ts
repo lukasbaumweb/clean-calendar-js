@@ -31,7 +31,7 @@ const createElement = (props: HTMLElementProps) => {
   return element;
 };
 
-export class Calendar {
+export class CleanCalendarJS {
   initDate = new Date();
   elements = {
     root: null,

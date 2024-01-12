@@ -1,4 +1,4 @@
-import { CleanCalendarJS } from '../lib/index';
+import CleanCalendarJS from '../lib/index';
 import { CalendarEvent } from '../lib/types/calendarEvent';
 
 const currentYear = new Date().getFullYear();
@@ -78,7 +78,7 @@ const events: CalendarEvent[] = [
     color: '#ddd',
   },
 ];
-const calendar = new CleanCalendarJS('#app', {
+const calendar = new CleanCalendarJS('.calendar', {
   locale: 'de_DE',
   events,
 });

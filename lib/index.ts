@@ -1,3 +1,3 @@
-import { Calendar } from "./classes/Calendar.class";
+import { CleanCalendarJS } from './classes/Calendar.class';
 
-export { Calendar as CleanCalendarJS };
+export default CleanCalendarJS;

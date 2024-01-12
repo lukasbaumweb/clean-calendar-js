@@ -19,5 +19,5 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "assets/locales", "lib/types", "lib/index.ts", "lib/classes", "lib/icons"]
+  "include": ["lib"]
 }
